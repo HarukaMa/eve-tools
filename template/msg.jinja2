@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Message Search</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+        table {
+            max-width: 85%;
+            border-collapse: collapse;
+            border: solid 2px;
+        }
+
+        th, td {
+            border: solid 1px;
+            padding: 2px 0.5em 2px;
+        }
+
+        th {
+            text-align: center;
+        }
+
+        td {
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<form>
+    <label>
+        Search terms
+        <input type="text" name="msg" value="{{ kw }}">
+    </label>
+    <button type="submit">Search</button>
+</form>
+<br>
+<table>
+    <thead>
+    <tr>
+        <th class="msgid">msgid</th>
+        <th class="en">en-us</th>
+        <th class="zh">zh</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for i in result %}
+    <tr>
+        <td class="msgid">{{ i.msgid }}</td>
+        <td class="en">{{ i.en | safe }}</td>
+        <td class="zh">{{ i.zh | safe }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</body>
+</html>
