@@ -1,13 +1,13 @@
-from aiohttp import web
-import aiohttp_jinja2
-import jinja2
-import pickle
-import requests
 import html
 import json
-import sqlite3
 import os
+import pickle
+import sqlite3
 
+import aiohttp_jinja2
+import jinja2
+import requests
+from aiohttp import web
 
 routes = web.RouteTableDef()
 
