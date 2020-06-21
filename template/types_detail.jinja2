@@ -25,11 +25,17 @@
         td {
             text-align: left;
         }
+
+        .desc {
+            max-width: 50%;
+        }
     </style>
 <body>
 {{ name }}<br>
 <br>
+<div class="desc">
 {{ desc | safe }}<br>
+</div>
 <br>
 Unparsed attributes: <br>
 {% for a in attr %}

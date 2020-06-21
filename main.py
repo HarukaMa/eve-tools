@@ -110,7 +110,10 @@ async def types_detail(request: web.Request):
     except:
         return web.Response(status=404)
     type_name = enfsd[type_table[type_id]["typeNameID"]][0]
-    desc = enfsd[type_table[type_id]["descriptionID"]][0]
+    try:
+        desc = enfsd[type_table[type_id]["descriptionID"]][0]
+    except KeyError:
+        desc = "No description"
     dgm: Dogma = dogma[type_id]
     attrs = dgm.dogmaAttributes
     attr = []
