@@ -21,7 +21,7 @@ enfsd = {}
 zh = {}
 zhfsd = {}
 name_type_table = {}
-type_name_table = {}
+type_table = {}
 dogma = {}
 attributes: Dict[int, dogmaAttribute] = {}
 effects: Dict[int, dogmaEffect] = {}
@@ -91,8 +91,8 @@ async def types(request: web.Request):
             if keyword.lower() in v[0].lower() and k not in added:
                 matches.append((k, enfsd[k][0], v[0]))
         try:
-            if int(keyword) in type_name_table.keys():
-                msgid = type_name_table[int(keyword)]
+            if int(keyword) in type_table.keys():
+                msgid = type_table[int(keyword)]["typeNameID"]
                 result.append(format_result(keyword, enfsd[msgid][0], zhfsd[msgid][0], "type_id"))
         except:
             pass
@@ -109,7 +109,8 @@ async def types_detail(request: web.Request):
         type_id = int(request.match_info["type_id"])
     except:
         return web.Response(status=404)
-    type_name = enfsd[type_name_table[type_id]][0]
+    type_name = enfsd[type_table[type_id]["typeNameID"]][0]
+    desc = enfsd[type_table[type_id]["descriptionID"]][0]
     dgm: Dogma = dogma[type_id]
     attrs = dgm.dogmaAttributes
     attr = []
@@ -135,14 +136,14 @@ async def types_detail(request: web.Request):
             name = effects[effect.effectID].effectName
         desc_id = effects[effect.effectID].descriptionID
         if desc_id is not None:
-            desc = enfsd[desc_id][0]
+            eff_desc = enfsd[desc_id][0]
         else:
-            desc = "No description"
+            eff_desc = "No description"
         e["name"] = name
         e["id"] = effect.effectID
-        e["desc"] = desc
+        e["desc"] = eff_desc
         eff.append(e)
-    return {"name": type_name, "attr": attr, "eff": eff}
+    return {"name": type_name, "desc": html.escape(desc).replace("\n", "<br>"), "attr": attr, "eff": eff}
 
 
 def load_files():
@@ -161,7 +162,7 @@ def load_files():
     for i, in result:
         data = json.loads(i)
         name_type_table[data["typeNameID"]] = data["typeID"]
-        type_name_table[data["typeID"]] = data["typeNameID"]
+        type_table[data["typeID"]] = data
     print("Loading type dogma data...")
     dogma = dogma_load("cache/typedogma.fsdbinary")
     print("Loading dogma attributes data...")

@@ -29,6 +29,8 @@
 <body>
 {{ name }}<br>
 <br>
+{{ desc | safe }}<br>
+<br>
 Unparsed attributes: <br>
 {% for a in attr %}
 {{ a.id }} {{ a.name }}: {{ a.value }} <br>
