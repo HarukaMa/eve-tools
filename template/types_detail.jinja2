@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ name }}</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+        table {
+            max-width: 85%;
+            border-collapse: collapse;
+            border: solid 2px;
+        }
+
+        th, td {
+            border: solid 1px;
+            padding: 2px 0.5em 2px;
+        }
+
+        th {
+            text-align: center;
+        }
+
+        td {
+            text-align: left;
+        }
+    </style>
+<body>
+{{ name }}<br>
+<br>
+Unparsed attributes: <br>
+{% for a in attr %}
+{{ a.id }} {{ a.name }}: {{ a.value }} <br>
+{% endfor %}
+<br>
+Unparsed effects: <br>
+{% for e in eff %}
+{{ e.id }} {{ e.name }}: {{ e.desc }} <br>
+{% endfor %}
+</body>
+</html>

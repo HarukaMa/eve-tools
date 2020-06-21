@@ -3,11 +3,16 @@ import json
 import os
 import pickle
 import sqlite3
+from typing import Dict
 
 import aiohttp_jinja2
 import jinja2
 import requests
 from aiohttp import web
+
+from dogmaAttributesLoader import load as attributes_load, dogmaAttribute
+from dogmaEffectsLoader import load as effects_load, dogmaEffect
+from typeDogmaLoader import load as dogma_load, Dogma
 
 routes = web.RouteTableDef()
 
@@ -15,7 +20,11 @@ en = {}
 enfsd = {}
 zh = {}
 zhfsd = {}
-type_name_table = {} # msgid: typeid
+name_type_table = {}
+type_name_table = {}
+dogma = {}
+attributes: Dict[int, dogmaAttribute] = {}
+effects: Dict[int, dogmaEffect] = {}
 
 def format_result(_id: str, e: str, z: str = None, key: str = "msgid"):
     result = {key: _id, "en": html.escape(e).replace("\n", "<br>")}
@@ -81,25 +90,69 @@ async def types(request: web.Request):
         for k, v in zhfsd.items():
             if keyword.lower() in v[0].lower() and k not in added:
                 matches.append((k, enfsd[k][0], v[0]))
-    for msgid, e, z in matches:
-        if msgid in type_name_table.keys():
-            result.append(format_result(type_name_table[msgid], e, z, "type_id"))
+        try:
+            if int(keyword) in type_name_table.keys():
+                msgid = type_name_table[int(keyword)]
+                result.append(format_result(keyword, enfsd[msgid][0], zhfsd[msgid][0], "type_id"))
+        except:
+            pass
+        for msgid, e, z in matches:
+            if msgid in name_type_table.keys():
+                result.append(format_result(name_type_table[msgid], e, z, "type_id"))
     return {"result": result, "kw": keyword}
 
 
 @routes.get("/types/{type_id}")
 @aiohttp_jinja2.template("types_detail.jinja2")
 async def types_detail(request: web.Request):
-    type_id = request.match_info["type_id"]
-    return
+    try:
+        type_id = int(request.match_info["type_id"])
+    except:
+        return web.Response(status=404)
+    type_name = enfsd[type_name_table[type_id]][0]
+    dgm: Dogma = dogma[type_id]
+    attrs = dgm.dogmaAttributes
+    attr = []
+    for attribute in attrs:
+        a = {}
+        name_id = attributes[attribute.attributeID].displayNameID
+        if name_id is not None:
+            name = enfsd[name_id][0]
+        else:
+            name = attributes[attribute.attributeID].name
+        a["name"] = name
+        a["id"] = attribute.attributeID
+        a["value"] = attribute.value
+        attr.append(a)
+    effs = dgm.dogmaEffects
+    eff = []
+    for effect in effs:
+        e = {}
+        name_id = effects[effect.effectID].displayNameID
+        if name_id is not None:
+            name = enfsd[name_id][0]
+        else:
+            name = effects[effect.effectID].effectName
+        desc_id = effects[effect.effectID].descriptionID
+        if desc_id is not None:
+            desc = enfsd[desc_id][0]
+        else:
+            desc = "No description"
+        e["name"] = name
+        e["id"] = effect.effectID
+        e["desc"] = desc
+        eff.append(e)
+    return {"name": type_name, "attr": attr, "eff": eff}
 
 
 def load_files():
-    global en, zh, enfsd, zhfsd
+    global en, zh, enfsd, zhfsd, dogma, attributes, effects
+    print("Loading localization data...")
     en = pickle.load(open("cache/localization_en-us.pickle", "rb"))[1]
     zh = pickle.load(open("cache/localization_zh.pickle", "rb"))[1]
     enfsd = pickle.load(open("cache/localization_fsd_en-us.pickle", "rb"))[1]
     zhfsd = pickle.load(open("cache/localization_fsd_zh.pickle", "rb"))[1]
+    print("Loading types data...")
     conn = sqlite3.connect("cache/evetypes.static")
     c = conn.cursor()
     sql = "SELECT value FROM cache"
@@ -107,7 +160,14 @@ def load_files():
     result = c.fetchall()
     for i, in result:
         data = json.loads(i)
-        type_name_table[data["typeNameID"]] = data["typeID"]
+        name_type_table[data["typeNameID"]] = data["typeID"]
+        type_name_table[data["typeID"]] = data["typeNameID"]
+    print("Loading type dogma data...")
+    dogma = dogma_load("cache/typedogma.fsdbinary")
+    print("Loading dogma attributes data...")
+    attributes = attributes_load("cache/dogmaattributes.fsdbinary")
+    print("Loading dogma effects data...")
+    effects = effects_load("cache/dogmaeffects.fsdbinary")
 
 def main():
     bin_base = "http://binaries.eveonline.com/"
@@ -188,6 +248,27 @@ def main():
                     print("Failed to download type info static data: %d" % r.status_code)
                     exit(1)
                 open("cache/evetypes.static", "wb").write(r.content)
+            elif fn == "res:/staticdata/typedogma.fsdbinary":
+                print("Downloading type dogma static data...")
+                r = requests.get(res_base + path)
+                if not r.ok:
+                    print("Failed to download type dogma static data: %d" % r.status_code)
+                    exit(1)
+                open("cache/typedogma.fsdbinary", "wb").write(r.content)
+            elif fn == "res:/staticdata/dogmaattributes.fsdbinary":
+                print("Downloading dogma attributes static data...")
+                r = requests.get(res_base + path)
+                if not r.ok:
+                    print("Failed to download dogma attributes static data: %d" % r.status_code)
+                    exit(1)
+                open("cache/dogmaattributes.fsdbinary", "wb").write(r.content)
+            elif fn == "res:/staticdata/dogmaeffects.fsdbinary":
+                print("Downloading dogma effects static data...")
+                r = requests.get(res_base + path)
+                if not r.ok:
+                    print("Failed to download dogma effects static data: %d" % r.status_code)
+                    exit(1)
+                open("cache/dogmaeffects.fsdbinary", "wb").write(r.content)
         open("cache/version.txt", "w").write(str(build))
 
     load_files()

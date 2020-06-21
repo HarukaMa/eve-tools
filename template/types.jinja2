@@ -52,7 +52,7 @@
     <tbody>
     {% for i in result %}
     <tr>
-        <td class="msgid">{{ i.type_id }}</td>
+        <td class="msgid"><a href="/types/{{ i.type_id }}">{{ i.type_id }}</a></td>
         <td class="en">{{ i.en | safe }}</td>
         <td class="zh">{{ i.zh | safe }}</td>
         <td class="link" onclick="copy({{ i.type_id }}, '{{ i.zh | safe }}')">&lt;url=showinfo:{{ i.type_id }}&gt;{{ i.zh | safe }}&lt;/url&gt;</td>
