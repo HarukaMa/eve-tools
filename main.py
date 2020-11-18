@@ -16,15 +16,14 @@ from typeDogmaLoader import load as dogma_load, Dogma
 
 routes = web.RouteTableDef()
 
-en = {}
 enfsd = {}
-zh = {}
 zhfsd = {}
 name_type_table = {}
 type_table = {}
 dogma = {}
 attributes: Dict[int, dogmaAttribute] = {}
 effects: Dict[int, dogmaEffect] = {}
+
 
 def format_result(_id: str, e: str, z: str = None, key: str = "msgid"):
     result = {key: _id, "en": html.escape(e).replace("\n", "<br>")}
@@ -48,16 +47,6 @@ async def msg(request: web.Request):
     result = []
     added = set()
     if keyword != "":
-        for k, v in en.items():
-            if str(k) == keyword or keyword.lower() in v[0].lower():
-                try:
-                    result.append(format_result(str(k), v[0], zh[k][0]))
-                except KeyError:
-                    result.append(format_result(str(k), v[0]))
-                added.add(str(k))
-        for k, v in zh.items():
-            if (str(k) == keyword or keyword.lower() in v[0].lower()) and str(k) not in added:
-                result.append(format_result(str(k), en[k][0], v[0]))
         for k, v in enfsd.items():
             if str(k) == keyword or keyword.lower() in v[0].lower():
                 try:
@@ -150,10 +139,8 @@ async def types_detail(request: web.Request):
 
 
 def load_files():
-    global en, zh, enfsd, zhfsd, dogma, attributes, effects
+    global enfsd, zhfsd, dogma, attributes, effects
     print("Loading localization data...")
-    en = pickle.load(open("cache/localization_en-us.pickle", "rb"))[1]
-    zh = pickle.load(open("cache/localization_zh.pickle", "rb"))[1]
     enfsd = pickle.load(open("cache/localization_fsd_en-us.pickle", "rb"))[1]
     zhfsd = pickle.load(open("cache/localization_fsd_zh.pickle", "rb"))[1]
     print("Loading types data...")
@@ -217,21 +204,7 @@ def main():
                 break
             fn = file[0]
             path = file[1]
-            if fn == "res:/localization/localization_en-us.pickle":
-                print("Downloading en-us localization data...")
-                r = requests.get(res_base + path)
-                if not r.ok:
-                    print("Failed to download en-us localization data: %d" % r.status_code)
-                    exit(1)
-                open("cache/localization_en-us.pickle", "wb").write(r.content)
-            elif fn == "res:/localization/localization_zh.pickle":
-                print("Downloading zh localization data...")
-                r = requests.get(res_base + path)
-                if not r.ok:
-                    print("Failed to download zh localization data: %d" % r.status_code)
-                    exit(1)
-                open("cache/localization_zh.pickle", "wb").write(r.content)
-            elif fn == "res:/localizationfsd/localization_fsd_en-us.pickle":
+            if fn == "res:/localizationfsd/localization_fsd_en-us.pickle":
                 print("Downloading en-us fsd localization data...")
                 r = requests.get(res_base + path)
                 if not r.ok:
